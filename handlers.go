@@ -17,6 +17,9 @@
 package common
 
 import (
+	"compress/gzip"
+	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"strconv"
@@ -65,20 +68,109 @@ func ReturnError(writer http.ResponseWriter, err *HttpError) {
 	err.logError()
 }
 
+// GetWriter creates a new compressed writer for the content type provided.
+func GetWriter(writer http.ResponseWriter, contentType string) *gzip.Writer {
+	g := gzip.NewWriter(writer)
+	writer.Header().Set("Content-Encoding", "gzip")
+	writer.Header().Set("Content-Type", contentType)
+	return g
+}
+
+// SendTemplate parses the template with the model provided and then outputs
+// the result for the content type provided.
+func SendTemplate(
+	writer http.ResponseWriter,
+	temp *template.Template,
+	contentType string,
+	model interface{}) {
+	g := GetWriter(writer, contentType)
+	defer g.Close()
+	err := temp.Execute(g, model)
+	if err != nil {
+		ReturnServerError(writer, err)
+	}
+}
+
+// SendHTMLTemplate parses the template with the model provided and then outputs
+// the result as HTML.
+func SendHTMLTemplate(
+	writer http.ResponseWriter,
+	temp *template.Template,
+	model interface{}) {
+	writer.Header().Set("Cache-Control", "no-cache")
+	SendTemplate(writer, temp, "text/html; charset=utf-8", model)
+}
+
+// SendJSTemplate parses the template with the model provided and then outputs
+// the result as JS.
+func SendJSTemplate(
+	writer http.ResponseWriter,
+	temp *template.Template,
+	model interface{}) {
+	SendTemplate(writer, temp, "application/javascript; charset=utf-8", model)
+}
+
+// SendJS sends the JSON data provided.
+func SendJS(writer http.ResponseWriter, data []byte) {
+	SendResponse(writer, "application/javascript; charset=utf-8", data, true)
+}
+
+// SendByteArray writes the data as an octet-stream.
+func SendByteArray(writer http.ResponseWriter, data []byte) {
+	SendResponse(writer, "application/octet-stream", data, true)
+}
+
+// SendByteArrayUncompressed writes the data as an octet-stream without
+// compression.
+func SendByteArrayUncompressed(writer http.ResponseWriter, data []byte) {
+	SendResponse(writer, "application/octet-stream", data, false)
+}
+
+// SendString writes out the string value with the appropriate content type.
+func SendString(writer http.ResponseWriter, value string) {
+	SendResponse(writer, "text/plain", []byte(value), true)
+}
+
+// SendResponse writes out the data with the content type provided.
+func SendResponse(
+	writer http.ResponseWriter,
+	contentType string,
+	data []byte,
+	compress bool) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+	var l int
+	var err error
+	if compress {
+		g := GetWriter(writer, contentType)
+		defer g.Close()
+		l, err = g.Write(data)
+	} else {
+		l, err = writer.Write(data)
+	}
+	if err != nil {
+		ReturnServerError(writer, err)
+		return
+	}
+	if l != len(data) {
+		ReturnServerError(writer, fmt.Errorf("byte count mismatch"))
+		return
+	}
+}
+
 // logError if the log flag is set to true using a format to make it easier
 // for operators to understand the cause of the error.
 func (err *HttpError) logError() {
 	if err.Log {
 		var b strings.Builder
-		b.WriteString("HTTP Error\r\n")
-		b.WriteString("\tMessage: " + err.Message + "\r\n")
-		b.WriteString("\tCode   : " + strconv.Itoa(err.Code) + "\r\n")
+		b.WriteString("HTTP Error\n")
+		b.WriteString("\tMessage: " + err.Message + "\n")
+		b.WriteString("\tCode   : " + strconv.Itoa(err.Code) + "\n")
 		if err.Error != nil {
-			b.WriteString("\tError  : " + err.Error.Error() + "\r\n")
+			b.WriteString("\tError  : " + err.Error.Error() + "\n")
 		}
 		if err.Request != nil {
-			b.WriteString("\tMethod : " + err.Request.Method + "\r\n")
-			b.WriteString("\tURL    : " + err.Request.URL.String() + "\r\n")
+			b.WriteString("\tMethod : " + err.Request.Method + "\n")
+			b.WriteString("\tURL    : " + err.Request.URL.String() + "\n")
 		}
 		log.Print(b.String())
 	}

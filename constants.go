@@ -1,5 +1,5 @@
 /* ****************************************************************************
- * Copyright 2022 51 Degrees Mobile Experts Limited (51degrees.com)
+ * Copyright 2020 51 Degrees Mobile Experts Limited (51degrees.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License.
@@ -13,33 +13,10 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  * ***************************************************************************/
+
 package common
 
-import (
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-)
+import "time"
 
-// HTTPTest returns a test response after having processed the handler, method, URL, and body provided.
-// t testing instance
-// method HTTP method
-// url HTTP url
-// body HTTP query string or body data
-// handler HTTP handler being tested
-func HTTPTest(
-	t *testing.T,
-	method string,
-	url string,
-	body io.Reader,
-	handler func(w http.ResponseWriter, r *http.Request)) *httptest.ResponseRecorder {
-	req, err := http.NewRequest(method, url, body)
-	if err != nil {
-		t.Fatal(err)
-	}
-	rr := httptest.NewRecorder()
-	httpHandler := http.HandlerFunc(handler)
-	httpHandler.ServeHTTP(rr, req)
-	return rr
-}
+// The base year for all dates encoded with the io time methods.
+var IoDateBase = time.Date(2020, time.Month(1), 1, 0, 0, 0, 0, time.UTC)

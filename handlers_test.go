@@ -60,9 +60,15 @@ func TestReturnApplicationError(t *testing.T) {
 }
 
 func testReturnServerError(t *testing.T, err error) {
-	rr := HTTPTest(t, "GET", "/test", nil, func(w http.ResponseWriter, r *http.Request) {
-		ReturnServerError(w, err)
-	})
+	rr := HTTPTest(
+		t,
+		"GET",
+		"",
+		"/test",
+		nil,
+		func(w http.ResponseWriter, r *http.Request) {
+			ReturnServerError(w, err)
+		})
 	validateCode(t, rr, http.StatusInternalServerError)
 	validateMessage(t, rr, serverErrorMessage)
 }
@@ -73,14 +79,20 @@ func testReturnApplicationError(
 	message string,
 	err error,
 	code int) {
-	rr := HTTPTest(t, "GET", "/test", nil, func(w http.ResponseWriter, r *http.Request) {
-		ReturnApplicationError(w, &HttpError{
-			Request: r,
-			Log:     log,
-			Message: message,
-			Code:    code,
-			Error:   err})
-	})
+	rr := HTTPTest(
+		t,
+		"GET",
+		"",
+		"/test",
+		nil,
+		func(w http.ResponseWriter, r *http.Request) {
+			ReturnApplicationError(w, &HttpError{
+				Request: r,
+				Log:     log,
+				Message: message,
+				Code:    code,
+				Error:   err})
+		})
 	validateCode(t, rr, code)
 	validateMessage(t, rr, message)
 }
