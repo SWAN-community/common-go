@@ -39,20 +39,5 @@ func TestIoTime(t *testing.T) {
 		fmt.Println(err)
 		t.Fail()
 	}
-	testCompareDate(t, r, d)
-}
-
-func testCompareDate(t *testing.T, a time.Time, b time.Time) {
-	if a.Year() != b.Year() {
-		fmt.Printf("Year %d != %d", a.Year(), b.Year())
-		t.Fail()
-	}
-	if a.Month() != b.Month() {
-		fmt.Printf("Month %d != %d", a.Month(), b.Month())
-		t.Fail()
-	}
-	if a.Day() != b.Day() {
-		fmt.Printf("Day %d != %d", a.Day(), b.Day())
-		t.Fail()
-	}
+	TestCompareDate(t, r, d)
 }

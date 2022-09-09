@@ -21,8 +21,120 @@ import (
 	"encoding"
 	"encoding/binary"
 	"fmt"
+	"math"
 	"time"
 )
+
+// WriteStrings one dimensional array of strings.
+func WriteStrings(b *bytes.Buffer, v []string) error {
+	err := WriteUint16(b, uint16(len(v)))
+	if err != nil {
+		return err
+	}
+	for _, i := range v {
+		err = WriteString(b, i)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ReadStrings into one dimensional array of strings.
+func ReadStrings(b *bytes.Buffer) ([]string, error) {
+	c, err := ReadUint16(b)
+	if err != nil {
+		return nil, err
+	}
+	v := make([]string, c, c)
+	for i := uint16(0); i < c; i++ {
+		v[i], err = ReadString(b)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return v, nil
+}
+
+// WriteByteArrayArray two dimensional array of bytes.
+func WriteByteArrayArray(b *bytes.Buffer, v [][]byte) error {
+	err := WriteUint16(b, uint16(len(v)))
+	if err != nil {
+		return err
+	}
+	for _, i := range v {
+		err = WriteByteArray(b, i)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ReadByteArrayArray from two dimensional array of bytes.
+func ReadByteArrayArray(b *bytes.Buffer) ([][]byte, error) {
+	c, err := ReadUint16(b)
+	if err != nil {
+		return nil, err
+	}
+	v := make([][]byte, c, c)
+	for i := uint16(0); i < c; i++ {
+		v[i], err = ReadByteArray(b)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return v, nil
+}
+
+// WriteFloat32 to the buffer.
+func WriteFloat32(b *bytes.Buffer, f float32) error {
+	return WriteUint32(b, math.Float32bits(f))
+}
+
+// ReadFloat32 from the buffer.
+func ReadFloat32(b *bytes.Buffer) (float32, error) {
+	f, err := ReadUint32(b)
+	if err != nil {
+		return 0, err
+	}
+	return math.Float32frombits(f), nil
+}
+
+// ReadTime from the next binary object.
+func ReadTime(b *bytes.Buffer) (time.Time, error) {
+	var t time.Time
+	d, err := ReadByteArray(b)
+	if err == nil {
+		t.GobDecode(d)
+	}
+	return t, err
+}
+
+// WriteTime as a binary object.
+func WriteTime(b *bytes.Buffer, t time.Time) error {
+	d, err := t.GobEncode()
+	if err != nil {
+		return err
+	}
+	return WriteByteArray(b, d)
+}
+
+// ReadDate reads the date from the unsigned 16 bit integer and then determines
+// the date by adding this to the IoDateBase epoch.
+func ReadDate(b *bytes.Buffer) (time.Time, error) {
+	d, err := ReadUint16(b)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return IoDateBase.Add(time.Duration(d) * time.Hour * 24), nil
+}
+
+// WriteDate writes the date as the number of hours since the IoDateBase epoch.
+// Uses an unsigned 16 bit integer.
+func WriteDate(b *bytes.Buffer, t time.Time) error {
+	return WriteUint16(b, uint16(t.Sub(IoDateBase).Hours()/24))
+}
 
 // ReadMarshaller reads the content into the unmarshaler instance.
 func ReadMarshaller(b *bytes.Buffer, m encoding.BinaryUnmarshaler) error {

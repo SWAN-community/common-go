@@ -16,12 +16,14 @@
 package common
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 )
 
 // HTTPTest returns a test response after having processed the handler, method,
@@ -65,4 +67,19 @@ func HTTPTest(
 	rr := httptest.NewRecorder()
 	http.HandlerFunc(handler).ServeHTTP(rr, req)
 	return rr
+}
+
+func TestCompareDate(t *testing.T, a time.Time, b time.Time) {
+	if a.Year() != b.Year() {
+		fmt.Printf("Year %d != %d", a.Year(), b.Year())
+		t.Fail()
+	}
+	if a.Month() != b.Month() {
+		fmt.Printf("Month %d != %d", a.Month(), b.Month())
+		t.Fail()
+	}
+	if a.Day() != b.Day() {
+		fmt.Printf("Day %d != %d", a.Day(), b.Day())
+		t.Fail()
+	}
 }
