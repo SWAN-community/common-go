@@ -24,6 +24,63 @@ import (
 	"testing"
 )
 
+const testContent = "Hello World"
+const testJSON = `{"key": "` + testContent + `"}`
+
+// TestHttpHelpers tests the standard response constructors work as expected
+// including the helper functions to get the response.
+func TestHttpHelpers(t *testing.T) {
+	t.Run("compressed", func(t *testing.T) {
+		rr := HTTPTest(
+			t,
+			"GET",
+			"",
+			"/test",
+			nil,
+			func(w http.ResponseWriter, r *http.Request) {
+				SendString(w, testContent)
+			})
+		s := ResponseAsStringTest(t, rr)
+		if s != testContent {
+			t.Fatal("wrong content")
+		}
+	})
+	t.Run("uncompressed", func(t *testing.T) {
+		rr := HTTPTest(
+			t,
+			"GET",
+			"",
+			"/test",
+			nil,
+			func(w http.ResponseWriter, r *http.Request) {
+				SendByteArrayUncompressed(w, []byte(testContent))
+			})
+		s := ResponseAsStringTest(t, rr)
+		if s != testContent {
+			t.Fatal("wrong content")
+		}
+	})
+	t.Run("map", func(t *testing.T) {
+		rr := HTTPTest(
+			t,
+			"GET",
+			"",
+			"/test",
+			nil,
+			func(w http.ResponseWriter, r *http.Request) {
+				SendJS(w, []byte(testJSON))
+			})
+		m := ResponseAsMapTest(t, rr)
+		if c, ok := m["key"]; ok {
+			if c != testContent {
+				t.Fatal("wrong content")
+			}
+		} else {
+			t.Fatal("missing key")
+		}
+	})
+}
+
 // TestReturnServerError simulates a server error.
 func TestReturnServerError(t *testing.T) {
 	err := errors.New("A")

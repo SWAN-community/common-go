@@ -16,6 +16,8 @@
 package common
 
 import (
+	"compress/gzip"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -67,6 +69,51 @@ func HTTPTest(
 	rr := httptest.NewRecorder()
 	http.HandlerFunc(handler).ServeHTTP(rr, req)
 	return rr
+}
+
+// ResponseAsMapTest decompresses the response and returns the body as a map.
+func ResponseAsMapTest(
+	t *testing.T,
+	rr *httptest.ResponseRecorder) map[string]interface{} {
+	var d map[string]interface{}
+	err := json.Unmarshal(ResponseAsByteArrayTest(t, rr), &d)
+	if err != nil {
+		t.Fatal(fmt.Errorf("error unmarshalling: %w", err))
+	}
+	return d
+}
+
+// ResponseAsStringTest decompresses the response and returns the body as a
+// string.
+func ResponseAsStringTest(
+	t *testing.T,
+	rr *httptest.ResponseRecorder) string {
+	return string(ResponseAsByteArrayTest(t, rr))
+}
+
+// ResponseAsByteArrayTest decompresses the response as a byte array.
+func ResponseAsByteArrayTest(
+	t *testing.T,
+	rr *httptest.ResponseRecorder) []byte {
+	var br io.Reader
+	e := rr.Header().Get("Content-Encoding")
+	switch e {
+	case "":
+		br = rr.Body
+	case "gzip":
+		var err error
+		br, err = gzip.NewReader(rr.Body)
+		if err != nil {
+			t.Fatal(fmt.Errorf("error gzip decompressing: %w", err))
+		}
+	default:
+		t.Fatal(fmt.Errorf("content type '%s' unsupported", e))
+	}
+	b, err := io.ReadAll(br)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return b
 }
 
 func TestCompareDate(t *testing.T, a time.Time, b time.Time) {
