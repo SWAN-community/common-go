@@ -20,6 +20,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 )
@@ -31,11 +32,14 @@ const testJSON = `{"key": "` + testContent + `"}`
 // including the helper functions to get the response.
 func TestHttpHelpers(t *testing.T) {
 	t.Run("compressed", func(t *testing.T) {
+		u, err := url.Parse("/test")
+		if err != nil {
+			t.Fatal(err)
+		}
 		rr := HTTPTest(
 			t,
-			"GET",
-			"",
-			"/test",
+			http.MethodGet,
+			u,
 			nil,
 			func(w http.ResponseWriter, r *http.Request) {
 				SendString(w, testContent)
@@ -46,11 +50,14 @@ func TestHttpHelpers(t *testing.T) {
 		}
 	})
 	t.Run("uncompressed", func(t *testing.T) {
+		u, err := url.Parse("/test")
+		if err != nil {
+			t.Fatal(err)
+		}
 		rr := HTTPTest(
 			t,
-			"GET",
-			"",
-			"/test",
+			http.MethodGet,
+			u,
 			nil,
 			func(w http.ResponseWriter, r *http.Request) {
 				SendByteArrayUncompressed(w, []byte(testContent))
@@ -61,11 +68,14 @@ func TestHttpHelpers(t *testing.T) {
 		}
 	})
 	t.Run("map", func(t *testing.T) {
+		u, err := url.Parse("/test")
+		if err != nil {
+			t.Fatal(err)
+		}
 		rr := HTTPTest(
 			t,
-			"GET",
-			"",
-			"/test",
+			http.MethodGet,
+			u,
 			nil,
 			func(w http.ResponseWriter, r *http.Request) {
 				SendJS(w, []byte(testJSON))
@@ -117,11 +127,14 @@ func TestReturnApplicationError(t *testing.T) {
 }
 
 func testReturnServerError(t *testing.T, err error) {
+	u, e := url.Parse("/test")
+	if e != nil {
+		t.Fatal(e)
+	}
 	rr := HTTPTest(
 		t,
-		"GET",
-		"",
-		"/test",
+		http.MethodGet,
+		u,
 		nil,
 		func(w http.ResponseWriter, r *http.Request) {
 			ReturnServerError(w, err)
@@ -136,11 +149,14 @@ func testReturnApplicationError(
 	message string,
 	err error,
 	code int) {
+	u, err := url.Parse("/test")
+	if err != nil {
+		t.Fatal(err)
+	}
 	rr := HTTPTest(
 		t,
-		"GET",
-		"",
-		"/test",
+		http.MethodGet,
+		u,
 		nil,
 		func(w http.ResponseWriter, r *http.Request) {
 			ReturnApplicationError(w, &HttpError{

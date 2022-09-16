@@ -23,7 +23,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"strings"
 	"testing"
 	"time"
 )
@@ -40,29 +39,14 @@ import (
 func HTTPTest(
 	t *testing.T,
 	method string,
-	host string,
-	url string,
-	values url.Values,
+	url *url.URL,
+	body io.Reader,
 	handler func(w http.ResponseWriter, r *http.Request)) *httptest.ResponseRecorder {
 
-	// Add the values to the body if not a GET.
-	var body io.Reader
-	if method != "GET" && values != nil {
-		body = strings.NewReader(values.Encode())
-	} else {
-		body = nil
-	}
-
 	// Get the new request.
-	req, err := http.NewRequest(method, url, body)
+	req, err := http.NewRequest(method, url.String(), body)
 	if err != nil {
 		t.Fatal(err)
-	}
-
-	// Set the host and query string parameters if a GET.
-	req.Host = host
-	if method == "GET" && values != nil {
-		req.URL.RawQuery = values.Encode()
 	}
 
 	// Call the handler and return the response.
