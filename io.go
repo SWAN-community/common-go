@@ -71,19 +71,6 @@ func WriteByteArrayArray(b *bytes.Buffer, v [][]byte) error {
 	return nil
 }
 
-// WriteByteArrayArray two dimensional array of bytes without including the
-// length of the byte arrays. Data written with this method can't subsequently
-// be reconstructed.
-func WriteByteArrayArrayNoLength(b *bytes.Buffer, v [][]byte) error {
-	for _, i := range v {
-		err := WriteByteArrayNoLength(b, i)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // ReadByteArrayArray from two dimensional array of bytes.
 func ReadByteArrayArray(b *bytes.Buffer) ([][]byte, error) {
 	c, err := ReadUint16(b)
