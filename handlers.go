@@ -48,7 +48,6 @@ func ReturnApplicationError(writer http.ResponseWriter, err *HttpError) {
 // ReturnServerError handles HTTP server errors consistently ensuring they are
 // output to the logger.
 // writer for the response
-// message to be sent in the response
 // err the error to be logged and included in the response if debug is true
 func ReturnServerError(writer http.ResponseWriter, err error) {
 	ReturnError(writer, &HttpError{
@@ -56,6 +55,23 @@ func ReturnServerError(writer http.ResponseWriter, err error) {
 		Message: serverErrorMessage,
 		Code:    http.StatusInternalServerError,
 		Error:   err})
+}
+
+// ReturnServerErrorRequest handles HTTP server errors consistently ensuring
+// they are output to the logger.
+// writer for the response
+// err the error to be logged and included in the response if debug is true
+// req the http request to be logged along with the error
+func ReturnServerErrorRequest(
+	writer http.ResponseWriter,
+	err error,
+	req *http.Request) {
+	ReturnError(writer, &HttpError{
+		Log:     true,
+		Message: serverErrorMessage,
+		Code:    http.StatusInternalServerError,
+		Error:   err,
+		Request: req})
 }
 
 // ReturnError handles all HTTP errors consistently.
