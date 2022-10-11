@@ -137,9 +137,15 @@ func SendResponse(
 	contentType string,
 	data []byte,
 	compress bool) {
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	var l int
 	var err error
+
+	// Set the CORS header if not already set.
+	const cors = "Access-Control-Allow-Origin"
+	if writer.Header().Get(cors) == "" {
+		writer.Header().Set(cors, "*")
+	}
+
 	if compress {
 		g := GetWriter(writer, contentType)
 		defer g.Close()
